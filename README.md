@@ -1,2 +1,6 @@
 # canonical-kubernetes-demos
-a set of demo containers for customers, conferences and testing canonical kubernetes
+
+This repository contains demo workloads for customers, PoC, demonstrations and conferences for use with Canonical Kubernetes (CDK).
+
+## Deploying Canonical Kubernetes on AWS
+## Deploying Canonical Kubernetes on Azure
