@@ -48,7 +48,7 @@ spec:
   resources:
     # This is the request for storage. Should be available in the cluster.
     requests:
-      storage: 10Mi
+      storage: 1Gi
   # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
   storageClassName: rbd
 
@@ -71,10 +71,33 @@ Doing this should resolve the pvc:
 ```
 calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pvc
 NAME             STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-minio-pv-claim   Bound     test      50Mi       RWO            rbd            4s
+minio-pv-claim   Bound     test      1Gi       RWO            rbd            4s
 ```
 
-Which should now resolve:
+Which should now resolve the pod creation for minio:
+
+If your PVC is too small,
+
+```
+Created minio configuration file successfully at /root/.minio
+
+
+Trace: 1: /q/.q/sources/gopath/src/github.com/minio/minio/cmd/server-main.go:247:cmd.serverMain()
+       2: /q/.q/sources/gopath/src/github.com/minio/minio/vendor/github.com/minio/cli/app.go:499:cli.HandleAction()
+       3: /q/.q/sources/gopath/src/github.com/minio/minio/vendor/github.com/minio/cli/command.go:214:cli.Command.Run()
+       4: /q/.q/sources/gopath/src/github.com/minio/minio/vendor/github.com/minio/cli/app.go:260:cli.(*App).Run()
+       5: /q/.q/sources/gopath/src/github.com/minio/minio/cmd/main.go:155:cmd.Main()
+       6: /q/.q/sources/gopath/src/github.com/minio/minio/main.go:71:main.main()
+[2018-03-21T03:24:34.902590795Z] [ERROR] Initializing object layer failed (disk path full)
+
+Trace: 1: /q/.q/sources/gopath/src/github.com/minio/minio/cmd/server-main.go:249:cmd.serverMain()
+       2: /q/.q/sources/gopath/src/github.com/minio/minio/vendor/github.com/minio/cli/app.go:499:cli.HandleAction()
+       3: /q/.q/sources/gopath/src/github.com/minio/minio/vendor/github.com/minio/cli/command.go:214:cli.Command.Run()
+       4: /q/.q/sources/gopath/src/github.com/minio/minio/vendor/github.com/minio/cli/app.go:260:cli.(*App).Run()
+       5: /q/.q/sources/gopath/src/github.com/minio/minio/cmd/main.go:155:cmd.Main()
+       6: /q/.q/sources/gopath/src/github.com/minio/minio/main.go:71:main.main()
+[2018-03-21T03:24:34.902646769Z] [ERROR] Unable to shutdown http server (server not initialized)
+```
 
 ## Deploying the Dedicated Workload
 ## Writing to the Minio Storage

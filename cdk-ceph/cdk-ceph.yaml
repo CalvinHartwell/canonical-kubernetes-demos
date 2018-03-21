@@ -1,4 +1,4 @@
-﻿series: xenial
+series: xenial
 applications:
   flannel:
     charm: 'cs:~containers/flannel-50'
@@ -24,7 +24,7 @@ applications:
   kubernetes-worker:
     charm: 'cs:~containers/kubernetes-worker-106'
     num_units: 3
-    constraints: cores=4 mem=4096
+    constraints: cores=4 mem=8192
     expose: true
     annotations:
       gui-x: '100'
@@ -32,6 +32,7 @@ applications:
   kubernetes-master:
     charm: 'cs:~containers/kubernetes-master-97'
     num_units: 2
+    constraints: cores=4 mem=8192
     annotations:
       gui-x: '800'
       gui-y: '850'

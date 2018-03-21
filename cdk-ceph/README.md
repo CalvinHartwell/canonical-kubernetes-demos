@@ -90,6 +90,7 @@ test      50M        RWO            Retain           Available             rbd  
 
 The PV is now ready to be configured by the kubernetes-workers. Try spinning up a workload and creating a PVC which utilises the PV.
 
+
 ## Useful Links
 - [https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu)
 - [https://jujucharms.com/docs/2.3/charms-storage-ceph](https://jujucharms.com/docs/2.3/charms-storage-ceph)
