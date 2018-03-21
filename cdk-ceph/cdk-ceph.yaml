@@ -1,0 +1,87 @@
+﻿series: xenial
+applications:
+  flannel:
+    charm: 'cs:~containers/flannel-50'
+    annotations:
+      gui-x: '450'
+      gui-y: '750'
+  easyrsa:
+    charm: 'cs:~containers/easyrsa-33'
+    num_units: 1
+    annotations:
+      gui-x: '450'
+      gui-y: '550'
+    to:
+    - kubernetes-master
+  ceph-osd:
+    charm: 'cs:ceph-osd-257'
+    num_units: 3
+    annotations:
+      gui-x: '300'
+      gui-y: '300'
+    to:
+     - kubernetes-worker
+  kubernetes-worker:
+    charm: 'cs:~containers/kubernetes-worker-106'
+    num_units: 3
+    constraints: cores=4 mem=4096
+    expose: true
+    annotations:
+      gui-x: '100'
+      gui-y: '850'
+  kubernetes-master:
+    charm: 'cs:~containers/kubernetes-master-97'
+    num_units: 2
+    annotations:
+      gui-x: '800'
+      gui-y: '850'
+  ceph-mon:
+    charm: 'cs:ceph-mon-23'
+    num_units: 3
+    annotations:
+      gui-x: '600'
+      gui-y: '300'
+    to:
+     - lxd:kubernetes-master
+  etcd:
+    charm: 'cs:~containers/etcd-74'
+    num_units: 3
+    annotations:
+      gui-x: '800'
+      gui-y: '550'
+  kubeapi-load-balancer:
+    charm: 'cs:~containers/kubeapi-load-balancer-55'
+    num_units: 1
+    expose: true
+    annotations:
+      gui-x: '450'
+      gui-y: '250'
+relations:
+  - - 'ceph-mon:osd'
+    - 'ceph-osd:mon'
+  - - 'kubernetes-master:kube-api-endpoint'
+    - 'kubeapi-load-balancer:apiserver'
+  - - 'kubernetes-master:loadbalancer'
+    - 'kubeapi-load-balancer:loadbalancer'
+  - - 'kubernetes-master:kube-control'
+    - 'kubernetes-worker:kube-control'
+  - - 'kubernetes-master:certificates'
+    - 'easyrsa:client'
+  - - 'etcd:certificates'
+    - 'easyrsa:client'
+  - - 'kubernetes-master:etcd'
+    - 'etcd:db'
+  - - 'kubernetes-worker:certificates'
+    - 'easyrsa:client'
+  - - 'kubernetes-worker:kube-api-endpoint'
+    - 'kubeapi-load-balancer:website'
+  - - 'kubeapi-load-balancer:certificates'
+    - 'easyrsa:client'
+  - - 'flannel:etcd'
+    - 'etcd:db'
+  - - 'flannel:cni'
+    - 'kubernetes-master:cni'
+  - - 'flannel:cni'
+    - 'kubernetes-worker:cni'
+  - - 'kubernetes-master:ceph-storage'
+    - 'ceph-mon:admin'
