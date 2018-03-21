@@ -343,6 +343,33 @@ or
  watch --color juju status --color
 ```
 
+Eventually the colours will all turn green and your cluster is good to go. To access the cluster, we need to install the kubectl command line client and copy the kubernetes configuration file over for it to use:
+
+```
+ # If this does not work, try adding the --classic option on the end.
+ snap install kubectl --classic
+```
+
+Next we copy over the configuration file:
+
+```
+  juju scp kubernetes-master/0:/home/ubuntu/config ~/.kube/config
+```
+
+Finally, using kubectl we can check that kubernetes cluster interaction is possible:
+
+```
+Kubernetes master is running at https://34.253.164.197:443
+
+Heapster is running at https://34.253.164.197:443/api/v1/namespaces/kube-system/services/heapster/proxy
+KubeDNS is running at https://34.253.164.197:443/api/v1/namespaces/kube-system/services/kube-dns/proxy
+kubernetes-dashboard is running at https://34.253.164.197:443/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy
+Grafana is running at https://34.253.164.197:443/api/v1/namespaces/kube-system/services/monitoring-grafana/proxy
+InfluxDB is running at https://34.253.164.197:443/api/v1/namespaces/kube-system/services/monitoring-influxdb/proxy
+```
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'
+
 # Useful Links
 - [https://jujucharms.com/docs/2.3/help-aws](https://jujucharms.com/docs/2.3/help-aws)
 - [https://jujucharms.com/docs/2.2/help-azure](https://jujucharms.com/docs/2.3/help-azure)
