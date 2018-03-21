@@ -209,6 +209,13 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'
 
 ## Deploying Canonical Kubernetes on Azure
 
+Make sure you have installed juju and snap:
+
+```
+sudo apt-get install snap
+snap install juju
+```
+
 We can first check that juju supports azure through the following command:
 
 ```
