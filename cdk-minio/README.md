@@ -10,19 +10,19 @@ This document assumes you have already deployed Canonical Kubernetes and have a 
 
 ## Deploying the Standalone Workload
 
-On the minio website, there is a page for generating the kubernetes payload. This repository includes two examples from that site which have been modified to work out of the box, if you've deployed CDK with Ceph using the steps mentioned above.
+On the minio website, there is a page for generating the kubernetes payload. This repository includes two examples from that site which have been modified to work out of the box with Canonical Kubernetes if you've deployed it with available PV.
 
 The standalone instance is designed to provide minio as a single instance, rather than a distributed cluster. This is useful for testing locally or prototyping, before moving to a bigger deployment.
 
 First make sure you have a pv available:
 
 ```
-calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ kubectl get pv
-NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM     STORAGECLASS   REASON    AGE
-test      1000M        RWO            Retain           Available             rbd                      1h
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-ceph$ kubectl get pvc
+NAME             STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+minio-pv-claim   Bound     test      2G         RWO            rbd            1d
 ```
 
-After you have the pv, modify the minio-standalone.yaml kubernetes payload to use that PV. Inside this yaml is a pvc definition, you need to adjust the pvc to use this PV you created.
+After you have the PV, modify the minio-standalone.yaml kubernetes payload to use that PV. Inside this yaml file is a pvc definition, you need to adjust the pvc to use this PV you created.
 
 It is possible to check the details of the PV using kubectl:
 
@@ -52,8 +52,9 @@ spec:
     requests:
       storage: 1Gi
   # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
-  storageClassName: rbd
+  storageClassName: rbd # <- change this line
 
+  # ... rest of the file is omitted
 ```
 
 In this example, we need to match the storageClassName (rbd) with the STORAGECLASS name given in the output of kubectl get pv command (rbd). Once it has been modified, apply the payload:
@@ -62,7 +63,7 @@ In this example, we need to match the storageClassName (rbd) with the STORAGECLA
 kubectl apply -f minio-standalone.yaml
 ```
 
-If there are problems, it can be delete and re-applied:
+If there are problems, it can be deleted and the previous command can be re-run to re-deploy the solution:
 
 ```
 kubectl delete -f minio-standalone.yaml
@@ -73,23 +74,21 @@ Doing this should resolve the pvc:
 ```
 calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pvc
 NAME             STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-minio-pv-claim   Bound     test      1Gi       RWO            rbd            4s
+minio-pv-claim   Bound     test      2G         RWO            rbd            1d
 ```
 
 Which should now resolve the pod creation for minio:
 
-
 ## Deploying the Dedicated Workload
+
 ## Writing to the Minio Storage
 ## Reading from the Minio Storage
-
 ## Troubleshooting & Errors
 
-If your PV or PVC is too small, MInio will start correctly and it will throw the following error. I recommend you give Minio at least 1GB of storage space:
+If your PV or PVC is too small, Minio will start correctly and it will throw the following error:
 
 ```
 Created minio configuration file successfully at /root/.minio
-
 
 Trace: 1: /q/.q/sources/gopath/src/github.com/minio/minio/cmd/server-main.go:247:cmd.serverMain()
        2: /q/.q/sources/gopath/src/github.com/minio/minio/vendor/github.com/minio/cli/app.go:499:cli.HandleAction()
@@ -108,7 +107,23 @@ Trace: 1: /q/.q/sources/gopath/src/github.com/minio/minio/cmd/server-main.go:249
 [2018-03-21T03:24:34.902646769Z] [ERROR] Unable to shutdown http server (server not initialized)
 ```
 
+To fix this issue, you need to create PV and PVC which provide at least 1GB of storage to Minio. Once you've done that, re-apply the kubernetes workload:
+
+```
+ # destroy and re-apply
+ kubectl delete -f minio-dedicated.yaml
+ kubectl apply -f minio-dedicated.yaml 
+```
+
 ## Conclusion
+
+We have covered the basics of deploying minio storage on-top of Canonical Kubernetes (CDK). The next steps would be to integrate the storage into your own application using one of the provided minio SDK's which can be found in the useful links seciton of this document.
 
 ## Useful Links
 - [https://www.minio.io/kubernetes.html](https://www.minio.io/kubernetes.html)
+- [https://docs.minio.io/docs/python-client-quickstart-guide](https://docs.minio.io/docs/python-client-quickstart-guide)
+- [https://docs.minio.io/docs/java-client-quickstart-guide](https://docs.minio.io/docs/java-client-quickstart-guide)
+- [https://docs.minio.io/docs/golang-client-quickstart-guide](https://docs.minio.io/docs/golang-client-quickstart-guide)
+- [https://docs.minio.io/docs/javascript-client-quickstart-guide](https://docs.minio.io/docs/javascript-client-quickstart-guide)
+- [https://docs.minio.io/docs/dotnet-client-quickstart-guide](https://docs.minio.io/docs/dotnet-client-quickstart-guide)
+- [https://docs.minio.io/docs/minio-client-quickstart-guide](https://docs.minio.io/docs/minio-client-quickstart-guide)
