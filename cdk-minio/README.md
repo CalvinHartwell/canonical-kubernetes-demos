@@ -4,7 +4,9 @@ This demo shows how to use Minio storage with Canonical Kubernetes. Minio storag
 
 It is a pretty useful storage mechanism which gives you Amazon S3 like storage wherever your kubernetes cluster is running. If you're running Kubernetes on-premise within your own data-center, on Google Cloud or Azure, you can avoid the problem of vendor lock-in with AWS by using Minio.
 
-This document assumes you have already deployed Canonical Kubernetes and have a cluster running already with some storage available for the creation of PV. If you want something quick to test with, I recommend you follow the cdk-ceph demo here to deploy Canonical Kubernetes with Ceph [https://github.com/CalvinHartwell/canonical-kubernetes-demos/tree/master/cdk-ceph](https://github.com/CalvinHartwell/canonical-kubernetes-demos/tree/master/cdk-ceph).
+## Prerequisites
+
+This document assumes you have already deployed Canonical Kubernetes and have a cluster running already with some storage available for the creation of PV. If you want something quick to test with, I recommend you follow the [cdk-ceph demo here to deploy Canonical Kubernetes with Ceph](https://github.com/CalvinHartwell/canonical-kubernetes-demos/tree/master/cdk-ceph) but create a PV with at least 1GB of Storage and not 50MB. If you do not give Minio enough storage space it will not work.
 
 ## Deploying the Standalone Workload
 
@@ -17,7 +19,7 @@ First make sure you have a pv available:
 ```
 calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ kubectl get pv
 NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM     STORAGECLASS   REASON    AGE
-test      50M        RWO            Retain           Available             rbd                      1h
+test      1000M        RWO            Retain           Available             rbd                      1h
 ```
 
 After you have the pv, modify the minio-standalone.yaml kubernetes payload to use that PV. Inside this yaml is a pvc definition, you need to adjust the pvc to use this PV you created.
@@ -76,7 +78,14 @@ minio-pv-claim   Bound     test      1Gi       RWO            rbd            4s
 
 Which should now resolve the pod creation for minio:
 
-If your PVC is too small,
+
+## Deploying the Dedicated Workload
+## Writing to the Minio Storage
+## Reading from the Minio Storage
+
+## Troubleshooting & Errors
+
+If your PV or PVC is too small, MInio will start correctly and it will throw the following error. I recommend you give Minio at least 1GB of storage space:
 
 ```
 Created minio configuration file successfully at /root/.minio
@@ -98,10 +107,6 @@ Trace: 1: /q/.q/sources/gopath/src/github.com/minio/minio/cmd/server-main.go:249
        6: /q/.q/sources/gopath/src/github.com/minio/minio/main.go:71:main.main()
 [2018-03-21T03:24:34.902646769Z] [ERROR] Unable to shutdown http server (server not initialized)
 ```
-
-## Deploying the Dedicated Workload
-## Writing to the Minio Storage
-## Reading from the Minio Storage
 
 ## Conclusion
 
