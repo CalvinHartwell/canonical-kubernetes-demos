@@ -149,10 +149,59 @@ These can be removed, so no access key is required or left as default credential
 
 From here, you can perform basic management of your cluster, such as adding or removing buckets and files or creating bucket policies.
 
-## Deploying the Dedicated Minio Workload
+## Deploying the Distributed Minio Workload
+
+The distributed Minio workload is very similar to the standalone workload but it runs in a highly-available, clustered mode using multiple replicas.
+
+First remove anything related to Minio from your cluster and run the deployment command:
 
 
+```
+kubectl apply -f minio-distributed.yaml
+```
 
+If there are problems, it can be deleted and the previous command can be re-run to re-deploy the solution:
+
+```
+kubectl delete -f minio-distributed.yaml
+```
+
+This will create multiple PV, PVC and PODS:
+
+```
+# kubectl get pvc
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pvc
+NAME           STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+data-minio-0   Bound     pvc-eff939ac-2e50-11e8-8499-0e009186c0be   1Gi        RWO            default        7h
+data-minio-1   Bound     pvc-438ccd22-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            default        7h
+data-minio-2   Bound     pvc-70ca2e51-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            default        7h
+data-minio-3   Bound     pvc-9dda3c4a-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            default        7h
+
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pvc
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM                  STORAGECLASS   REASON    AGE
+pvc-438ccd22-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-1   default                  7h
+pvc-70ca2e51-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-2   default                  7h
+pvc-9dda3c4a-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-3   default                  7h
+pvc-eff939ac-2e50-11e8-8499-0e009186c0be   1Gi        RWO            Delete           Bound     default/data-minio-0   default                  7
+
+```
+
+The caveat here is that you need to have an even amount of replicas (2, 4, etc) and each replica needs at least 2GB of available storage through a PV.
+
+```
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get po
+NAME                                               READY     STATUS    RESTARTS   AGE
+default-http-backend-h9vg4                         1/1       Running   0          9h
+minio-0                                            1/1       Running   0          7h
+minio-1                                            1/1       Running   0          7h
+minio-2                                            1/1       Running   0          7h
+minio-3                                            1/1       Running   0          7h
+nginx-ingress-kubernetes-worker-controller-8c44t   1/1       Running   0          9h
+nginx-ingress-kubernetes-worker-controller-xgljb   1/1       Running   0          9h
+nginx-ingress-kubernetes-worker-controller-zfqd7   1/1       Running   0          9h
+```
+
+The service should now be availabe and running again, just as like the standalone version. 
 
 ## Using the Minio Command Line Tool
 
@@ -231,6 +280,13 @@ calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ minio-client ls --recursi
 [2018-03-23 03:50:23 GMT]  10KiB test/kitten.jpg
 ```
 
+To delete the host from our client:
+
+```
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ minio-client config host remove minio
+Removed `minio` successfully.
+```
+
 ## Troubleshooting & Errors
 
 If your PV or PVC is too small, Minio will start correctly and it will throw the following error:
@@ -259,8 +315,8 @@ To fix this issue, you need to create PV and PVC which provide at least 1GB of s
 
 ```
  # destroy and re-apply
- kubectl delete -f minio-dedicated.yaml
- kubectl apply -f minio-dedicated.yaml
+ kubectl delete -f minio-distributed.yaml
+ kubectl apply -f minio-distributed.yaml
 ```
 
 If you get a constant 'ContainerCreating' status this means that the container cannot be started, either it is not in your registry or the PVC has issues:

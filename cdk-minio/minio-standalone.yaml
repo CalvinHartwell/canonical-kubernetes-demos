@@ -15,7 +15,7 @@ spec:
     requests:
       storage: 2Gi
    # if you have multiple storage classes, change this
-   storageClassName: default
+  storageClassName: default
   # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
   #storageClassName:
 ---

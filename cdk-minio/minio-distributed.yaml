@@ -9,7 +9,8 @@ spec:
   clusterIP: None
   ports:
     - port: 9000
-      name: minio
+      protocol: TCP
+      targetPort: 9000
   selector:
     app: minio
 ---
@@ -56,7 +57,7 @@ spec:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 200Gi
+          storage: 1.5Gi
       # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
       storageClassName: default
 ---
@@ -74,4 +75,3 @@ spec:
     protocol: TCP
     nodePort: 30900
     port: 9000
-    targetPort: 9000
