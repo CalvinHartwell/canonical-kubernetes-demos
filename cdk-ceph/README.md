@@ -84,7 +84,7 @@ Finally, we can create a PV on kubernetes:
  juju run-action kubernetes-master/0 create-rbd-pv name=test size=50
 ```
 
-We can check the pv has been crated
+We can check the pv has been created:
 
 ```
 calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ kubectl get pv
@@ -152,7 +152,7 @@ If you see the following error in your syslog:
 Run the following command from the ceph-osd nodes:
 
 ```
- ceph osd crush tunables
+ ceph osd crush tunables hammer 
 ```
 
 ## Useful Links
