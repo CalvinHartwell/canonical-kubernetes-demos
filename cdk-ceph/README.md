@@ -31,7 +31,12 @@ Don't forget to also install kubectl and copy the kubeconfig file from the kuber
  juju scp kubernetes-master/0:/home/ubuntu/config ~/.kube/config
 ```
 
-The next step is to add some storage devices to the osd nodes which they can consume. You can use the command juju storage-pools to get a list of storage pools:
+
+The next step is to add some storage devices to the osd nodes which they can consume. You can do this using juju actions or manually using the command line tools.
+
+## Using juju actions to mount the storage
+
+You can use the command juju storage-pools to get a list of storage pools:
 
 ```
 # output for AWS
@@ -89,6 +94,64 @@ test      50M        RWO            Retain           Available             rbd  
 ```
 
 The PV is now ready to be configured by the kubernetes-workers. Try spinning up a workload and creating a PVC which utilises the PV.
+
+## Manually configuring the PV and Ceph storage
+
+First we need to add some block devices for the worker nodes to consume, this is automated on public cloud, but I assume you already have disks attached if you have physical or on-prem nodes:
+
+```
+# commands for AWS
+juju add-storage ceph-osd/0 osd-devices=ebs,10G,1
+juju add-storage ceph-osd/1 osd-devices=ebs,10G,1
+juju add-storage ceph-osd/2 osd-devices=ebs,10G,1
+
+# commands for Azure
+juju add-storage ceph-osd/0 osd-devices=azure,10G,1
+juju add-storage ceph-osd/1 osd-devices=azure,10G,1
+juju add-storage ceph-osd/2 osd-devices=azure,10G,1
+```
+
+This will cause juju to add more storage to the ceph-osd nodes.
+
+
+You can now monitor the status again, you will see that the storage is being attached to the OSD nodes using:
+
+```
+ watch --color juju status --color
+```
+
+Next lets copy the Ceph config files from the ceph-mon machines to the workers using scp:
+
+```
+ # Make a temporary directory and copy all the ceph configs over. 
+ mkdir /tmp/ceph/
+ juju scp ceph-mon/0:/etc/ceph/* /tmp/ceph/
+ juju scp  /tmp/ceph/* ceph-osd/0:/etc/ceph/
+ juju scp  /tmp/ceph/* ceph-osd/1:/etc/ceph/
+ juju scp  /tmp/ceph/* ceph-osd/2:/etc/ceph/
+```
+
+## Destroying the cluster and storage
+
+The following command will destroy the cluster and all attached storage:
+
+```
+ juju destroy-controller cpe-k8s --destroy-all-models --destroy-storage
+```
+
+## Troubleshooting and Common Errors
+
+If you see the following error in your syslog:
+
+```
+ missing features 400000000000000
+```
+
+Run the following command from the ceph-osd nodes:
+
+```
+ ceph osd crush tunables
+```
 
 
 ## Useful Links
