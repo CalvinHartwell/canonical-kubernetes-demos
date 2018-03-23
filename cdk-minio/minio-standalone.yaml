@@ -1,4 +1,18 @@
+---
 # This PV has been added to the regular example, you should change this depending on your architecture
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+   name: minio-pv
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: minio-pv
+  mount
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -14,9 +28,9 @@ spec:
   resources:
     # This is the request for storage. Should be available in the cluster.
     requests:
-      storage: 1Gi
+      storage: 5Gi
   # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
-  storageClassName: rbd
+  #storageClassName:
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment

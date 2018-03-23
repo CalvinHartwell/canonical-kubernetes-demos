@@ -152,8 +152,9 @@ If you see the following error in your syslog:
 Run the following command from the ceph-osd nodes:
 
 ```
- ceph osd crush tunables hammer 
+ ceph osd crush tunables hammer
 ```
+
 
 ## Useful Links
 - [https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu)

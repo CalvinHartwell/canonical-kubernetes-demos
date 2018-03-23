@@ -144,6 +144,26 @@ To fix this issue, you need to create PV and PVC which provide at least 1GB of s
  kubectl apply -f minio-dedicated.yaml
 ```
 
+If you get a constant 'ContainerCreating' status this means that the container cannot be started, either it is not in your registry or the PVC has issues:
+
+```
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get po
+NAME                                               READY     STATUS              RESTARTS   AGE
+default-http-backend-h9vg4                         1/1       Running             0          22m
+minio-deployment-6b7595956b-p4nlj                  0/1       ContainerCreating   0          2m
+nginx-ingress-kubernetes-worker-controller-8c44t   1/1       Running             0          20m
+nginx-ingress-kubernetes-worker-controller-xgljb   1/1       Running             0          21m
+nginx-ingress-kubernetes-worker-controller-zfqd7   1/1       Running             0          21m
+```
+
+If you run the kubectl get pvc command and see 'Pending' it is most likely caused by problems with the PVC/PV. You should adjust the size of your PVC so it is less than the total size of your PV and then re-run the container workload until you see the following message:
+
+```
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pvc
+NAME             STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+minio-pv-claim   Bound     test      1G         RWO            rbd            13s
+```
+
 ## Conclusion
 
 We have covered the basics of deploying minio storage on-top of Canonical Kubernetes (CDK). The next steps would be to integrate the storage into your own application using one of the provided minio SDK's which can be found in the useful links seciton of this document.
