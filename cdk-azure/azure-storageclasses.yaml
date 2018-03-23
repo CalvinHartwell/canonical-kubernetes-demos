@@ -1,0 +1,22 @@
+---
+# Azure Disk Storage Class
+# Slow disks
+# https://kubernetes.io/docs/concepts/storage/storage-classes/#azure-disk
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: default
+provisioner: kubernetes.io/azure-disk
+parameters:
+  storageaccounttype: Standard_LRS
+  kind: Shared
+---
+# Azure File Storage Class
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: azurefile
+provisioner: kubernetes.io/azure-file
+parameters:
+  skuName: Standard_LRS
+  location: eastus

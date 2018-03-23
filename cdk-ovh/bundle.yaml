@@ -1,0 +1,62 @@
+﻿machines:
+  "0": 
+applications:
+  easyrsa:
+    charm: 'cs:~containers/easyrsa-33'
+    num_units: 1
+    annotations:
+      gui-x: '450'
+      gui-y: '550'
+    to:
+      - '0'
+  etcd:
+    charm: 'cs:~containers/etcd-74'
+    num_units: 1
+    annotations:
+      gui-x: '800'
+      gui-y: '550'
+    to:
+      - '0'
+  flannel:
+    charm: 'cs:~containers/flannel-50'
+    annotations:
+      gui-x: '461'
+      gui-y: '785'
+  kubernetes-master:
+    charm: 'cs:~containers/kubernetes-master-97'
+    num_units: 1
+    expose: true
+    annotations:
+      gui-x: '832'
+      gui-y: '884.9999389648438'
+    to:
+      - '0'
+  kubernetes-worker:
+    charm: 'cs:~containers/kubernetes-worker-106'
+    num_units: 1
+    constraints: cores=4 mem=4096
+    expose: true
+    annotations:
+      gui-x: '100'
+      gui-y: '850'
+    to:
+      - '0'
+relations:
+- - kubernetes-master:kube-api-endpoint
+  - kubernetes-worker:kube-api-endpoint
+- - kubernetes-master:kube-control
+  - kubernetes-worker:kube-control
+- - kubernetes-master:certificates
+  - easyrsa:client
+- - kubernetes-master:etcd
+  - etcd:db
+- - kubernetes-worker:certificates
+  - easyrsa:client
+- - etcd:certificates
+  - easyrsa:client
+- - flannel:etcd
+  - etcd:db
+- - flannel:cni
+  - kubernetes-master:cni
+- - flannel:cni
+  - kubernetes-worker:cni
