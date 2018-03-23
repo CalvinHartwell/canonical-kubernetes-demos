@@ -147,7 +147,10 @@ These can be removed, so no access key is required or left as default credential
 
 ![minio logged-in](https://raw.githubusercontent.com/CalvinHartwell/canonical-kubernetes-demos/master/cdk-minio/images/cdk-minio-loggedin.png "Minio Logged In")
 
+From here, you can perform basic management of your cluster, such as adding or removing buckets and files or creating bucket policies.
+
 ## Deploying the Dedicated Minio Workload
+
 
 
 
@@ -161,10 +164,71 @@ Let's install it first using the snap:
  sudo snap install minio-client --edge --devmode
 ```
 
-We add our newly provisioned minio server to our minio client as an end point:
+We add our newly provisioned minio server to our minio client as an end point, if you changed your access key or password in the bundle file, they should be adjusted here as well:
 
 ```
- mc config host add minio http://192.168.1.51 BKIKJAA5BMMU2RHO6IBB V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ minio-client config host add minio http://18.232.166.57:30900 admin password
+mc: Configuration written to `/home/calvinh/snap/minio-client/164/.mc/config.json`. Please update your access credentials.
+mc: Successfully created `/home/calvinh/snap/minio-client/164/.mc/share`.
+mc: Initialized share uploads `/home/calvinh/snap/minio-client/164/.mc/share/uploads.json` file.
+mc: Initialized share downloads `/home/calvinh/snap/minio-client/164/.mc/share/downloads.json` file.
+Added `minio` successfully.
+```
+
+We can now interact with Minio using the command-line client:
+
+```
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ minio-client ?
+NAME:
+  mc - Minio Client for cloud storage and filesystems.
+
+USAGE:
+  mc [FLAGS] COMMAND [COMMAND FLAGS | -h] [ARGUMENTS...]
+
+COMMANDS:
+  ls       List files and folders.
+  mb       Make a bucket or a folder.
+  cat      Display file and object contents.
+  pipe     Redirect STDIN to an object or file or STDOUT.
+  share    Generate URL for sharing.
+  cp       Copy files and objects.
+  mirror   Mirror buckets and folders.
+  find     Search for files and objects.
+  stat     Stat contents of objects and folders.
+  diff     List objects with size difference or missing between two folders or buckets.
+  rm       Remove files and objects.
+  events   Manage object notifications.
+  watch    Watch for file and object events.
+  policy   Manage anonymous access to objects.
+  admin    Manage Minio servers
+  session  Manage saved sessions for cp command.
+  config   Manage mc configuration file.
+  update   Check for a new software update.
+  version  Print version info.
+
+GLOBAL FLAGS:
+  --config-folder value, -C value  Path to configuration folder. (default: "/home/calvinh/snap/minio-client/164/.mc")
+  --quiet, -q                      Disable progress bar display.
+  --no-color                       Disable color theme.
+  --json                           Enable JSON formatted output.
+  --debug                          Enable debug output.
+  --insecure                       Disable SSL certificate verification.
+  --help, -h                       Show help.
+
+VERSION:
+  DEVELOPMENT.GOGET
+```
+
+I uploaded a file to Minio using the web browser, called kitten.jpg in a bucket I also created there called test. I can now check for that file using the command line tool:
+
+```
+# The connection I added was called 'minio', this command lists all buckets in minio
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ minio-client ls minio
+[2018-03-23 03:50:23 GMT]     0B test/
+
+# This next command recursively lists all buckets and files within the minio bucket:
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos$ minio-client ls --recursive minio
+[2018-03-23 03:50:23 GMT]  10KiB test/kitten.jpg
 ```
 
 ## Troubleshooting & Errors
@@ -221,10 +285,12 @@ minio-pv-claim   Bound     test      1G         RWO            rbd            13
 
 ## Conclusion
 
-We have covered the basics of deploying minio storage on-top of Canonical Kubernetes (CDK). The next steps would be to integrate the storage into your own application using one of the provided minio SDK's which can be found in the useful links seciton of this document.
+We have covered the basics of deploying minio storage on-top of Canonical Kubernetes (CDK). The next steps would be to integrate the storage into your own application using one of the provided minio SDK's which can be found in the useful links seciton of this document. Additional parameters can be changed in Minio, for example it is possible to configure it to use an SSL certificate for example.
 
 ## Useful Links
 - [https://www.minio.io/kubernetes.html](https://www.minio.io/kubernetes.html)
+- [https://github.com/minio/minio/blob/master/docs/config/README.md](https://github.com/minio/minio/blob/master/docs/config/README.md)
+- [https://github.com/minio/minio](https://github.com/minio/minio)
 - [https://docs.minio.io/docs/python-client-quickstart-guide](https://docs.minio.io/docs/python-client-quickstart-guide)
 - [https://docs.minio.io/docs/java-client-quickstart-guide](https://docs.minio.io/docs/java-client-quickstart-guide)
 - [https://docs.minio.io/docs/golang-client-quickstart-guide](https://docs.minio.io/docs/golang-client-quickstart-guide)
