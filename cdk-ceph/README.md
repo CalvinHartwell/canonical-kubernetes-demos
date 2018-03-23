@@ -97,7 +97,7 @@ The PV is now ready to be configured by the kubernetes-workers. Try spinning up 
 
 ## Manually configuring the PV and Ceph storage
 
-First we need to add some block devices for the worker nodes to consume, this is automated on public cloud, but I assume you already have disks attached if you have physical or on-prem nodes:
+First we need to add some block devices for the worker nodes to consume, this is automated on public cloud, but I assume you already have some spare disks attached to your ceph-osd nodes if you're using your own infrastructure (phsyical or virtual):
 
 ```
 # commands for AWS
@@ -120,16 +120,18 @@ You can now monitor the status again, you will see that the storage is being att
  watch --color juju status --color
 ```
 
-Next lets copy the Ceph config files from the ceph-mon machines to the workers using scp:
+Next lets copy the Ceph config files from the ceph-mon machines to the workers using scp. You only need to do this step if your ceph-mon and ceph-osd services run on different machines.
 
 ```
- # Make a temporary directory and copy all the ceph configs over. 
+ # Make a temporary directory and copy all the ceph configs over.
  mkdir /tmp/ceph/
  juju scp ceph-mon/0:/etc/ceph/* /tmp/ceph/
  juju scp  /tmp/ceph/* ceph-osd/0:/etc/ceph/
  juju scp  /tmp/ceph/* ceph-osd/1:/etc/ceph/
  juju scp  /tmp/ceph/* ceph-osd/2:/etc/ceph/
 ```
+
+
 
 ## Destroying the cluster and storage
 
@@ -152,7 +154,6 @@ Run the following command from the ceph-osd nodes:
 ```
  ceph osd crush tunables
 ```
-
 
 ## Useful Links
 - [https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu)
