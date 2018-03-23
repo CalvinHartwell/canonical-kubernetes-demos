@@ -80,9 +80,38 @@ minio-pv-claim   Bound     test      2G         RWO            rbd            1d
 Which should now resolve the pod creation for minio:
 
 ## Deploying the Dedicated Workload
-
 ## Writing to the Minio Storage
+
+To write and read data from we could use any of the available SDK(s), but we will use the minio client (https://docs.minio.io/docs/minio-client-quickstart-guide)[https://docs.minio.io/docs/minio-client-quickstart-guide].
+
+Let's install it first using the snap:
+
+```
+ sudo snap install minio-client --edge --devmode
+```
+
+We add our newly provisioned minio server to our minio client as an end point:
+
+```
+ mc config host add minio http://192.168.1.51 BKIKJAA5BMMU2RHO6IBB V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
+```
+
 ## Reading from the Minio Storage
+
+To write and read data from we could use any of the available SDK(s), but we will use the minio client (https://docs.minio.io/docs/minio-client-quickstart-guide)[https://docs.minio.io/docs/minio-client-quickstart-guide].
+
+Let's install it first using the snap:
+
+```
+ sudo snap install minio-client --edge --devmode
+```
+
+We add our newly provisioned minio server to our minio client as an end point:
+
+```
+ mc config host add minio http://192.168.1.51 BKIKJAA5BMMU2RHO6IBB V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
+```
+
 ## Troubleshooting & Errors
 
 If your PV or PVC is too small, Minio will start correctly and it will throw the following error:
@@ -112,7 +141,7 @@ To fix this issue, you need to create PV and PVC which provide at least 1GB of s
 ```
  # destroy and re-apply
  kubectl delete -f minio-dedicated.yaml
- kubectl apply -f minio-dedicated.yaml 
+ kubectl apply -f minio-dedicated.yaml
 ```
 
 ## Conclusion
