@@ -62,6 +62,7 @@ spec:
       storageClassName: default
 ---
 # The loadbalancer entry was removed for a nodeport entry
+# this is just used to access the cluster for testing purposes
 apiVersion: v1
 kind: Service
 metadata:
@@ -75,3 +76,4 @@ spec:
     protocol: TCP
     nodePort: 30900
     port: 9000
+    targetPort: 9000

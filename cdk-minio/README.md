@@ -169,39 +169,116 @@ kubectl delete -f minio-distributed.yaml
 This will create multiple PV, PVC and PODS:
 
 ```
-# kubectl get pvc
 calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pvc
 NAME           STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-data-minio-0   Bound     pvc-eff939ac-2e50-11e8-8499-0e009186c0be   1Gi        RWO            default        7h
-data-minio-1   Bound     pvc-438ccd22-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            default        7h
-data-minio-2   Bound     pvc-70ca2e51-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            default        7h
-data-minio-3   Bound     pvc-9dda3c4a-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            default        7h
+data-minio-0   Bound     pvc-83dbc211-2ec4-11e8-8499-0e009186c0be   1536Mi     RWO            default        14m
+data-minio-1   Bound     pvc-b0a646ab-2ec4-11e8-8499-0e009186c0be   1536Mi     RWO            default        13m
+data-minio-2   Bound     pvc-4d0bf318-2ec5-11e8-8499-0e009186c0be   1536Mi     RWO            default        8m
+data-minio-3   Bound     pvc-7b5edcfb-2ec5-11e8-8499-0e009186c0be   1536Mi     RWO            default        7m
 
-calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pvc
+
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM                  STORAGECLASS   REASON    AGE
-pvc-438ccd22-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-1   default                  7h
-pvc-70ca2e51-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-2   default                  7h
-pvc-9dda3c4a-2e51-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-3   default                  7h
-pvc-eff939ac-2e50-11e8-8499-0e009186c0be   1Gi        RWO            Delete           Bound     default/data-minio-0   default                  7
+pvc-4d0bf318-2ec5-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-2   default                  8m
+pvc-7b5edcfb-2ec5-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-3   default                  6m
+pvc-83dbc211-2ec4-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-0   default                  13m
+pvc-b0a646ab-2ec4-11e8-8499-0e009186c0be   1536Mi     RWO            Delete           Bound     default/data-minio-1   default                  12m
 
 ```
 
-The caveat here is that you need to have an even amount of replicas (2, 4, etc) and each replica needs at least 2GB of available storage through a PV.
+The caveat here is that you need to have an even amount of replicas (2, 4, etc) and each replica needs at least 1.5-2GB of available storage through a PV.
 
 ```
 calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get po
 NAME                                               READY     STATUS    RESTARTS   AGE
-default-http-backend-h9vg4                         1/1       Running   0          9h
-minio-0                                            1/1       Running   0          7h
-minio-1                                            1/1       Running   0          7h
-minio-2                                            1/1       Running   0          7h
-minio-3                                            1/1       Running   0          7h
-nginx-ingress-kubernetes-worker-controller-8c44t   1/1       Running   0          9h
-nginx-ingress-kubernetes-worker-controller-xgljb   1/1       Running   0          9h
-nginx-ingress-kubernetes-worker-controller-zfqd7   1/1       Running   0          9h
+default-http-backend-h9vg4                         1/1       Running   0          16h
+minio-0                                            1/1       Running   0          15m
+minio-1                                            1/1       Running   0          13m
+minio-2                                            1/1       Running   0          9m
+minio-3                                            1/1       Running   0          8m
+nginx-ingress-kubernetes-worker-controller-8c44t   1/1       Running   0          16h
+nginx-ingress-kubernetes-worker-controller-xgljb   1/1       Running   0          16h
+nginx-ingress-kubernetes-worker-controller-zfqd7   1/1       Running   0          16h
 ```
 
-The service should now be availabe and running again, just as like the standalone version. 
+The service should now be availabe and running again, just as like the standalone version. Note that it will take much longer to deploy when compared to the standalone system.
+
+Eventually you will see a message like this, note the 'Status' is set to 4, this means there are four nodes running as part of the minio cluster:
+
+```
+Created minio configuration file successfully at /root/.minio
+
+Drive Capacity: 2.7 GiB Free, 2.7 GiB Total
+Status:         4 Online, 0 Offline.
+
+Endpoint:  http://10.1.68.16:9000  http://127.0.0.1:9000
+AccessKey: admin
+SecretKey: password
+
+Browser Access:
+   http://10.1.68.16:9000  http://127.0.0.1:9000
+
+Command-line Access: https://docs.minio.io/docs/minio-client-quickstart-guide
+   $ mc config host add myminio http://10.1.68.16:9000 admin password
+
+Object API (Amazon S3 compatible):
+   Go:         https://docs.minio.io/docs/golang-client-quickstart-guide
+   Java:       https://docs.minio.io/docs/java-client-quickstart-guide
+   Python:     https://docs.minio.io/docs/python-client-quickstart-guide
+   JavaScript: https://docs.minio.io/docs/javascript-client-quickstart-guide
+   .NET:       https://docs.minio.io/docs/dotnet-client-quickstart-guide
+```
+
+What we need to do is open up this port. We could also use an ingress rule with a load-balancer instead with a DNS entry:
+
+```
+juju run --unit kubernetes-worker/0 "open-port 30900"
+juju run --unit kubernetes-worker/1 "open-port 30900"
+juju run --unit kubernetes-worker/2 "open-port 30900"
+```
+
+If you run the above commands and then run juju status, you should be able to grab the IP address of one of your worker nodes.
+
+Hit the IP address in the browser using the port 30900, you should be greated by a nice welcoming web interface:
+
+![minio login page](https://raw.githubusercontent.com/CalvinHartwell/canonical-kubernetes-demos/master/cdk-minio/images/cdk-minio-loginpage.png "Minio Storage Login Page")
+
+As this is a clustered setup, the recommendation would be to create a DNS entry for the minio service, with A-Records pointing to each of the individual Kubernetes worker nodes.
+
+You can also use the built-in ingress load-balancer which will provide a simple round-robin between the workers. The benefit of this is that you don't need to open up the nodeport, but it does require DNS entries.
+
+The example below needs to be modified. The host entries should be replaced with DNS entries which are reflected on a DNS server, or the xip.io service can be used for testing. Xip.io essentially returns back an a-record for an IP address which is put infront of it, so hitting mino.192.168.1.1.xip.io in a web browser would return back an A-Record for 192.168.1.1.
+
+In the example, replace <YOUR-WORKER-IP> with the IP address of one of your workers using juju status, add it to the minio-distribued.yaml file and use kubectl apply to re-apply the changes.
+
+```
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+ name: minio
+ annotations:
+   kubernetes.io/tls-acme: "true"
+   ingress.kubernetes.io/secure-backends: "true"
+spec:
+ tls:
+   - hosts:
+     - minio.<YOUR-WORKER-IP>.xip.io
+ rules:
+   - host: minio.<YOUR-WORKER-IP>.xip.io
+     http:
+       paths:
+         - path: /
+           backend:
+             serviceName: minio
+             servicePort: 443
+```
+
+After you've done that, you should be able to hit minio.your-worker-ip.xip.io in your browser and be able to resolve to the minio web gui. 
+
+To delete the service, run the following command:
+
+```
+ kubectl delete -f minio-distributed.yaml
+```
 
 ## Using the Minio Command Line Tool
 
