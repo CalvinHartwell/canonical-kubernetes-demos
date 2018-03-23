@@ -6,9 +6,11 @@ It is a pretty useful storage mechanism which gives you Amazon S3 like storage w
 
 ## Prerequisites
 
-This document assumes you have already deployed Canonical Kubernetes and have a cluster running already with some storage available for the creation of PV. If you want something quick to test with, I recommend you follow the [cdk-ceph demo here to deploy Canonical Kubernetes with Ceph](https://github.com/CalvinHartwell/canonical-kubernetes-demos/tree/master/cdk-ceph) but create a PV with at least 1GB of Storage and not 50MB. If you do not give Minio enough storage space it will not work.
+This document assumes you have already deployed Canonical Kubernetes and have a cluster running already with some storage available for the creation of PV. If you want something quick to test with.
 
-## Deploying the Standalone Workload
+I recommend you follow the [cdk-ceph demo here to deploy Canonical Kubernetes with Ceph](https://github.com/CalvinHartwell/canonical-kubernetes-demos/tree/master/cdk-ceph) but create a default storage class based on the manual instructions. The PVC you create will need at least 1GB of storage so keep this in mind.
+
+## Deploying the Standalone Minio Workload
 
 On the minio website, there is a page for generating the kubernetes payload. This repository includes two examples from that site which have been modified to work out of the box with Canonical Kubernetes if you've deployed it with available PV.
 
@@ -79,24 +81,77 @@ minio-pv-claim   Bound     test      2G         RWO            rbd            1d
 
 Which should now resolve the pod creation for minio:
 
-## Deploying the Dedicated Workload
-## Writing to the Minio Storage
-
-To write and read data from we could use any of the available SDK(s), but we will use the minio client (https://docs.minio.io/docs/minio-client-quickstart-guide)[https://docs.minio.io/docs/minio-client-quickstart-guide].
-
-Let's install it first using the snap:
-
 ```
- sudo snap install minio-client --edge --devmode
-```
-
-We add our newly provisioned minio server to our minio client as an end point:
-
-```
- mc config host add minio http://192.168.1.51 BKIKJAA5BMMU2RHO6IBB V7f1CwQqAcwo80UEIJEjc5gVQUSSx5ohQ9GSrr12
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-ceph$ kubectl get po
+NAME                                               READY     STATUS    RESTARTS   AGE
+default-http-backend-h9vg4                         1/1       Running   0          1h
+minio-deployment-6b7595956b-kzvsp                  1/1       Running   0          33s
+nginx-ingress-kubernetes-worker-controller-8c44t   1/1       Running   0          1h
+nginx-ingress-kubernetes-worker-controller-xgljb   1/1       Running   0          1h
+nginx-ingress-kubernetes-worker-controller-zfqd7   1/1       Running   0          1h
 ```
 
-## Reading from the Minio Storage
+And if you then tail the logs for the minio pod, you will end up with a nice welcome message:
+
+```
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-ceph$ kubectl logs -f minio-deployment-6b7595956b-kzvsp
+Created minio configuration file successfully at /root/.minio
+
+Drive Capacity: 1.8 GiB Free, 1.8 GiB Total
+
+Endpoint:  http://10.1.68.5:9000  http://127.0.0.1:9000
+AccessKey: admin
+SecretKey: password
+
+Browser Access:
+   http://10.1.68.5:9000  http://127.0.0.1:9000
+
+Command-line Access: https://docs.minio.io/docs/minio-client-quickstart-guide
+   $ mc config host add myminio http://10.1.68.5:9000 admin password
+
+Object API (Amazon S3 compatible):
+   Go:         https://docs.minio.io/docs/golang-client-quickstart-guide
+   Java:       https://docs.minio.io/docs/java-client-quickstart-guide
+   Python:     https://docs.minio.io/docs/python-client-quickstart-guide
+   JavaScript: https://docs.minio.io/docs/javascript-client-quickstart-guide
+   .NET:       https://docs.minio.io/docs/dotnet-client-quickstart-guide
+
+```
+
+Now our service is up, but we can't access it! Right at the end of the file is a nodeport entry which will be used to access the cluster.
+
+What we need to do is open up this port. We could also use an ingress rule with a load-balancer instead with a DNS entry:
+
+```
+juju run --unit kubernetes-worker/0 "open-port 30900"
+juju run --unit kubernetes-worker/1 "open-port 30900"
+juju run --unit kubernetes-worker/2 "open-port 30900"
+```
+
+If you run the above commands and then run juju status, you should be able to grab the IP address of one of your worker nodes.
+
+Hit the IP address in the browser using the port 30900, you should be greated by a nice welcoming web interface:
+
+![minio login page](https://raw.githubusercontent.com/CalvinHartwell/cdk-rancher/master/images/rancher-login.png "Minio Storage Login Page")
+
+But what are the credentials? If you go back and look at the minio-standalone.yaml, you will see a section that defines the admin user and password:
+
+```
+- name: MINIO_ACCESS_KEY
+  value: "admin"
+- name: MINIO_SECRET_KEY
+  value: "password"
+```
+
+These can be removed, so no access key is required or left as default credentials. Finally We can now log in using these details:
+
+![rancher login page](https://raw.githubusercontent.com/CalvinHartwell/cdk-rancher/master/images/rancher-login.png "Rancher Web GUI Login Page")
+
+## Deploying the Dedicated Minio Workload
+
+
+
+## Using the Minio Command Line Tool
 
 To write and read data from we could use any of the available SDK(s), but we will use the minio client (https://docs.minio.io/docs/minio-client-quickstart-guide)[https://docs.minio.io/docs/minio-client-quickstart-guide].
 

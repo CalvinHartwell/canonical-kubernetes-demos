@@ -113,24 +113,19 @@ juju add-storage ceph-osd/2 osd-devices=azure,10G,1
 
 This will cause juju to add more storage to the ceph-osd nodes.
 
-
 You can now monitor the status again, you will see that the storage is being attached to the OSD nodes using:
 
 ```
  watch --color juju status --color
 ```
 
-Next lets copy the Ceph config files from the ceph-mon machines to the workers using scp. You only need to do this step if your ceph-mon and ceph-osd services run on different machines.
+Now we have storage devices, we need to create a pool in Ceph. SSH to the machine running the ceph-mon process and run:
 
 ```
- # Make a temporary directory and copy all the ceph configs over.
- mkdir /tmp/ceph/
- juju scp ceph-mon/0:/etc/ceph/* /tmp/ceph/
- juju scp  /tmp/ceph/* ceph-osd/0:/etc/ceph/
- juju scp  /tmp/ceph/* ceph-osd/1:/etc/ceph/
- juju scp  /tmp/ceph/* ceph-osd/2:/etc/ceph/
+ ceph osd create pool rbd 100 100
 ```
 
+Now we've created a pool, we need to create some things inside kubernetes. The first of which is the secret file which allows Kubernetes to interact with Ceph:
 
 
 ## Destroying the cluster and storage
@@ -155,10 +150,10 @@ Run the following command from the ceph-osd nodes:
  ceph osd crush tunables hammer
 ```
 
-
 ## Useful Links
 - [https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu)
 - [https://jujucharms.com/docs/2.3/charms-storage-ceph](https://jujucharms.com/docs/2.3/charms-storage-ceph)
 - [https://jujucharms.com/ceph-osd](https://jujucharms.com/ceph-osd)
 - [https://jujucharms.com/ceph-mon](https://jujucharms.com/ceph-mon)
 - [https://kubernetes.io/docs/getting-started-guides/ubuntu/storage/](https://kubernetes.io/docs/getting-started-guides/ubuntu/storage/)
+- [https://kubernetes.io/docs/tasks/administer-cluster/change-default-storage-class/#whats-next](https://kubernetes.io/docs/tasks/administer-cluster/change-default-storage-class/#whats-next)
