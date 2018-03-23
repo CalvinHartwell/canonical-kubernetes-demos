@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -57,17 +58,20 @@ spec:
         requests:
           storage: 200Gi
       # Uncomment and add storageClass specific to your requirements below. Read more https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
-      #storageClassName:
+      storageClassName: default
 ---
+# The loadbalancer entry was removed for a nodeport entry
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio-service
+  name: minio-nodeport
 spec:
-  type: LoadBalancer
-  ports:
-    - port: 9000
-      targetPort: 9000
-      protocol: TCP
+  type: NodePort
   selector:
-    app: minio
+     app: minio
+  ports:
+  - name: minio
+    protocol: TCP
+    nodePort: 30900
+    port: 9000
+    targetPort: 9000

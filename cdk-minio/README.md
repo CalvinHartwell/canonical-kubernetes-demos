@@ -132,7 +132,7 @@ If you run the above commands and then run juju status, you should be able to gr
 
 Hit the IP address in the browser using the port 30900, you should be greated by a nice welcoming web interface:
 
-![minio login page](https://raw.githubusercontent.com/CalvinHartwell/cdk-rancher/master/images/rancher-login.png "Minio Storage Login Page")
+![minio login page](https://raw.githubusercontent.com/CalvinHartwell/canonical-kubernetes-demos/master/cdk-minio/images/cdk-minio-loginpage.png "Minio Storage Login Page")
 
 But what are the credentials? If you go back and look at the minio-standalone.yaml, you will see a section that defines the admin user and password:
 
@@ -145,7 +145,7 @@ But what are the credentials? If you go back and look at the minio-standalone.ya
 
 These can be removed, so no access key is required or left as default credentials. Finally We can now log in using these details:
 
-![rancher login page](https://raw.githubusercontent.com/CalvinHartwell/cdk-rancher/master/images/rancher-login.png "Rancher Web GUI Login Page")
+![minio logged-in](https://raw.githubusercontent.com/CalvinHartwell/canonical-kubernetes-demos/master/cdk-minio/images/cdk-minio-loggedin.png "Minio Logged In")
 
 ## Deploying the Dedicated Minio Workload
 
