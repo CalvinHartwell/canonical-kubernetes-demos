@@ -9,3 +9,5 @@ once deployed, run the scripts to enable the customisations:
 chmod 700 scripts/monitoring-config.sh
 ./monitoring-config.sh
 ```
+
+It is also possible to use conjure-up to add the logging and monitoring tools. 

@@ -32,7 +32,7 @@ Don't forget to also install kubectl and copy the kubeconfig file from the kuber
 ```
 
 
-The next step is to add some storage devices to the osd nodes which they can consume. You can do this using juju actions or manually using the command line tools.
+The next step is to add some storage devices to the osd nodes which they can consume. You can do this using juju actions or manually using the command line tools. Note that currently
 
 ## Using juju actions to mount the storage
 
@@ -122,11 +122,156 @@ You can now monitor the status again, you will see that the storage is being att
 Now we have storage devices, we need to create a pool in Ceph. SSH to the machine running the ceph-mon process and run:
 
 ```
- ceph osd create pool rbd 100 100
+ juju ssh kubernetes-master/0
+ ceph osd pool create rbd 100 100
 ```
 
-Now we've created a pool, we need to create some things inside kubernetes. The first of which is the secret file which allows Kubernetes to interact with Ceph:
+You can check how much space is available in the pool:
 
+```
+ juju ssh kubernetes-master/0
+ rados df
+ ubuntu@ip-172-31-20-225:~$ rados df
+pool name                 KB      objects       clones     degraded      unfound           rd        rd KB           wr        wr KB
+rbd                        0            0            0            0            0            0            0            0            0
+  total used          103092            0
+  total avail       15591696
+  total space       15694788
+
+```
+
+You can set quotas on the pool:
+
+```
+ceph osd pool set-quota rbd max_objects 0
+ceph osd pool set-quota rbd max_bytes 0
+```
+
+Its also possible to delete the pool:
+
+```
+ceph osd pool delete rbd rbd --yes-i-really-really-mean-it
+```
+
+Now we've created a pool, we need to create some things inside kubernetes. The first of which is the secret file which allows Kubernetes to interact with Ceph. If you add the storage and the relationships correctly in the bundle, juju should automatically create the secret file Kubernetes need sto interact with Ceph:
+
+```
+# check if the secret already exists
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get secrets
+NAME                                                         TYPE                                  DATA      AGE
+ceph-secret                                                  kubernetes.io/rbd                     1         19m
+default-token-zhtvn                                          kubernetes.io/service-account-token   3         21m
+nginx-ingress-kubernetes-worker-serviceaccount-token-hx4cg   kubernetes.io/service-account-token   3         20m
+
+# Lets inspect the secret
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl edit secret ceph-secret
+
+apiVersion: v1
+data:
+  key: QVFDVGo3VmFBUTh6RXhBQVlYcXJTaGQ0TkNNejJFUEdDTE53Tmc9PQ==
+kind: Secret
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"key":"QVFDVGo3VmFBUTh6RXhBQVlYcXJTaGQ0TkNNejJFUEdDTE53Tmc9PQ=="},"kind":"Secret","metadata":{"annotations":{},"name":"ceph-secret","namespace":"default"},"type":"kubernetes.io/rbd"}
+  creationTimestamp: 2018-03-23T23:38:54Z
+  name: ceph-secret
+  namespace: default
+  resourceVersion: "446"
+  selfLink: /api/v1/namespaces/default/secrets/ceph-secret
+  uid: 597390bf-2ef3-11e8-9e9d-02c5db71785a
+type: kubernetes.io/rbd
+```
+
+Note the key value, this is the base64 encoded auth key/token used to interact with Ceph. We can manually re-create the secret by applying a Kubernetes manfiest. First we need to get the secret:
+
+```
+ # SSH to the ceph-mon node and grab the API key
+ juju ssh ceph-mon/0
+ ubuntu@ip-172-31-28-41:~$ sudo cat /etc/ceph/ceph.client.admin.keyring
+[client.admin]
+	key = AQCTj7VaAQ8zExAAYXqrShd4NCMz2EPGCLNwNg==
+	caps mds = "allow *"
+	caps mon = "allow *"
+	caps osd = "allow *"
+
+# convert the key to a base 64 encoded value
+ubuntu@ip-172-31-28-41:~$ echo -n "AQCTj7VaAQ8zExAAYXqrShd4NCMz2EPGCLNwNg==" -c | base64
+QVFDVGo3VmFBUTh6RXhBQVlYcXJTaGQ0TkNNejJFUEdDTE53Tmc9PSAtYw==
+
+# note that the base64 encoded key is the same as the one in the existing secret.
+# you can also get this key using the ceph osd command on the k8s master node. 
+```
+
+If we need to create a new secret, take this ID from the key and create a new secret file like the one below, save it to a file and use kubectl apply to create the secret:
+
+```
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ceph-secret
+data:
+  key: QVFBUDdxZGFudXQvSkJBQXRLd3JSemNyLzVVa29DbEt1Q1FUZGc9PQ==
+type:
+  kubernetes.io/rbd
+```
+
+Next we need to create the StorageClass. Creating a default storageclass simplifies the way that Kubernetes interacts with the Ceph. It means you don't need to create individual PV but rather, when PVC are created, PV's are automatically creaed on Ceph based on the PVC requests.
+
+In this example below, change the monitor IP(s) to the IP addresses of the nodes running the Ceph Monitors. The Ceph default port is 6789. You may need to change the namespace name and the secret name. Note if you're on AWS or Azure, these should be the private IP addresses in your cluster, not the public IP addresses.
+
+```
+---
+apiVersion: storage.k8s.io/v1beta1
+kind: StorageClass
+metadata:
+   name: default
+   annotations:
+     storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/rbd
+parameters:
+  # change the monitors to match your IP addresses of your ceph mon nodes
+  monitors: 172.31.30.184:6789,172.31.76.153:6789,172.31.46.62:6789
+  adminId: admin
+  adminSecretName: ceph-secret
+  adminSecretNamespace: default
+  # change the name here if you the ceph pool you created is not called rbd
+  pool: rbd
+  userId: admin
+  userSecretName: ceph-secret
+  fsType: ext4
+  imageFormat: "2"
+  imageFeatures: "layering"
+```
+
+Now we should be able to automatically spawn PVs when PVC are created. To test this setup, create a PVC (use kubectl apply -f cdk-pvc-test.yaml):
+
+```
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ceph-vol01
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+```
+
+Finally you should see the PV and PVC have been created:
+
+```
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM                STORAGECLASS   REASON    AGE
+pvc-e429fd5b-2efe-11e8-9e9d-02c5db71785a   2Gi        RWO            Delete           Bound     default/ceph-vol01   default                  1m
+
+calvinh@ubuntu-ws:~/Source/canonical-kubernetes-demos/cdk-minio$ kubectl get pvc
+NAME         STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+ceph-vol01   Bound     pvc-e429fd5b-2efe-11e8-9e9d-02c5db71785a   2Gi        RWO            default        2m
+```
 
 ## Destroying the cluster and storage
 
@@ -151,6 +296,7 @@ Run the following command from the ceph-osd nodes:
 ```
 
 ## Useful Links
+- [http://docs.ceph.com/docs/jewel/rados/operations/pools/](http://docs.ceph.com/docs/jewel/rados/operations/pools/)
 - [https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-with-snap-on-ubuntu)
 - [https://jujucharms.com/docs/2.3/charms-storage-ceph](https://jujucharms.com/docs/2.3/charms-storage-ceph)
 - [https://jujucharms.com/ceph-osd](https://jujucharms.com/ceph-osd)
