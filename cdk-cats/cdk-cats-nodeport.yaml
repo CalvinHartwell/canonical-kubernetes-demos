@@ -1,0 +1,64 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: cdk-cats
+  name: cdk-cats
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: cdk-cats
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: cdk-cats
+    spec:
+      containers:
+      - image: calvinhartwell/cdk-cats:latest
+        imagePullPolicy: ""
+        name: cdk-cats
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 30
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdk-cats
+spec:
+  type: NodePort
+  selector:
+     app: cdk-cats
+  ports:
+  - name: cdk-cats
+    protocol: TCP
+    nodePort: 30080
+    port: 80
+    targetPort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+ name: cdk-cats
+spec:
+ rules:
+   - host: cats.51.255.64.68.xip.io
+     http:
+       paths:
+         - path: /
+           backend:
+             serviceName: cdk-cats
+             servicePort: 80
