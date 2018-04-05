@@ -69,7 +69,7 @@ services:
     num_units: 1
 ### Monitoring ###
   grafana:
-    charm: cs:xenial/grafana
+    charm: cs:xenial/grafana-11
     num_units: 1
     expose: true
     #options:
