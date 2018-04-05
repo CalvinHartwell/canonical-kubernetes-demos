@@ -30,9 +30,9 @@ services:
       gui-x: '800'
       gui-y: '850'
     charm: cs:~containers/kubernetes-master-97
-    num_units: 1
+    num_units: 3
     options:
-      channel: 1.9/stable
+      channel: 1.8/stable
   kubernetes-worker:
     annotations:
       gui-x: '100'
@@ -42,43 +42,7 @@ services:
     expose: true
     num_units: 3
     options:
-      channel: 1.9/stable
-  ### Logging ###
-  apache2:
-    charm: cs:xenial/apache2
-    num_units: 1
-    expose: true
-    options:
-      enable_modules: "headers proxy_html proxy_http"
-  elasticsearch:
-    charm: cs:xenial/elasticsearch
-    num_units: 1
-    options:
-      firewall_enabled: false
-  filebeat:
-    charm: cs:xenial/filebeat
-    options:
-      logpath: '/var/log/*.log /var/log/containers/*.log'
-  graylog:
-    charm: cs:xenial/graylog
-    num_units: 1
-    #options:
-    #  snap_proxy: http://10.244.3.10:80
-  mongodb:
-    charm: cs:xenial/mongodb
-    num_units: 1
-### Monitoring ###
-  grafana:
-    charm: cs:xenial/grafana
-    num_units: 1
-    expose: true
-    #options:
-    #  http_proxy: http://10.244.3.10:80
-  prometheus:
-    charm: cs:xenial/prometheus
-    num_units: 1
-  telegraf:
-    charm: cs:xenial/telegraf
+      channel: 1.8/stable
 relations:
 - - kubernetes-master:kube-api-endpoint
   - kubeapi-load-balancer:apiserver
@@ -104,21 +68,3 @@ relations:
   - kubernetes-master:cni
 - - flannel:cni
   - kubernetes-worker:cni
-- - apache2:reverseproxy
-  - graylog:website
-- - graylog:elasticsearch
-  - elasticsearch:client
-- - graylog:mongodb
-  - mongodb:database
-- - filebeat:beats-host
-  - kubernetes-master:juju-info
-- - filebeat:beats-host
-  - kubernetes-worker:juju-info
-- - prometheus:grafana-source
-  - grafana:grafana-source
-- - telegraf:prometheus-client
-  - prometheus:target
-- - kubernetes-master:juju-info
-  - telegraf:juju-info
-- - kubernetes-worker:juju-info
-  - telegraf:juju-info
