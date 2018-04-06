@@ -9,7 +9,7 @@
 # Latest versions can be found here: 
 # https://github.com/kubernetes/helm/releases
 
-HELM_VERSION="v2.9.0-rc2"
+HELM_VERSION="v2.8.2"
 PATH="$PATH:$HOME/bin"
 
 if [[ $(uname -s) = "Darwin" ]]; then
